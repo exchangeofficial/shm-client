@@ -50,22 +50,22 @@ export default function Login() {
     const checkTelegramWebApp = () => {
       const tgWebApp = window.Telegram?.WebApp;
       const isInside = !!(tgWebApp && (
-        (tgWebApp.initData && tgWebApp.initData.length > 0) || 
+        (tgWebApp.initData && tgWebApp.initData.length > 0) ||
         tgWebApp.initDataUnsafe?.user?.id
       ));
-      console.log('Telegram WebApp check:', { 
+      console.log('Telegram WebApp check:', {
         hasTelegram: !!window.Telegram,
         hasWebApp: !!tgWebApp,
         initData: tgWebApp?.initData,
         user: tgWebApp?.initDataUnsafe?.user,
-        isInside 
+        isInside
       });
       setIsInsideTelegramWebApp(isInside);
     };
 
     // Проверяем сразу
     checkTelegramWebApp();
-    
+
     // И ещё раз через небольшую задержку (скрипт мог не успеть загрузиться)
     const timer = setTimeout(checkTelegramWebApp, 100);
     return () => clearTimeout(timer);
