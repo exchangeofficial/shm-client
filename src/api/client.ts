@@ -84,6 +84,8 @@ export const userApi = {
   stopService: (userServiceId: number) => api.post('/user/service/stop', { user_service_id: userServiceId }),
   getPayments: () => api.get('/user/pay'),
   getPaySystems: () => api.get('/user/pay/paysystems'),
+  getForecast: () => api.get('/user/pay/forecast'),
+  deleteAutopayment: (paySystem: string) => api.delete('/user/autopayment', { params: { pay_system: paySystem } }),
 };
 
 export const storageApi = {

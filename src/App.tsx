@@ -37,7 +37,6 @@ const theme = createTheme({
   },
 });
 
-// Проверяем находимся ли внутри Telegram WebApp
 const isInsideTelegramWebApp = (): boolean => {
   const tgWebApp = window.Telegram?.WebApp;
   // initData непустая строка ИЛИ есть данные пользователя в initDataUnsafe
@@ -63,6 +62,44 @@ function ThemeToggle() {
   );
 }
 
+// Верхняя панель для WebApp
+function WebAppHeader() {
+  const navigate = useNavigate();
+  const { logout } = useStore();
+  const computedColorScheme = useComputedColorScheme('light');
+  const { setColorScheme } = useMantineColorScheme();
+
+  const handleThemeToggle = () => {
+    setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <Group justify="flex-end" p="sm" gap="xs">
+      <ActionIcon
+        onClick={handleThemeToggle}
+        variant="subtle"
+        size="lg"
+        color={computedColorScheme === 'dark' ? 'gray' : 'gray'}
+      >
+        {computedColorScheme === 'light' ? <IconMoon size={20} /> : <IconSun size={20} />}
+      </ActionIcon>
+      <ActionIcon
+        onClick={handleLogout}
+        variant="subtle"
+        size="lg"
+        color="red"
+      >
+        <IconLogout size={20} />
+      </ActionIcon>
+    </Group>
+  );
+}
+
 // Нижняя навигация для WebApp
 function BottomNavigation() {
   const location = useLocation();
@@ -71,10 +108,10 @@ function BottomNavigation() {
   const computedColorScheme = useComputedColorScheme('light');
 
   const iconMap: Record<string, React.ReactNode> = {
-    '/': <IconUser size={22} />,
-    '/services': <IconServer size={22} />,
-    '/payments': <IconCreditCard size={22} />,
-    '/withdrawals': <IconReceipt size={22} />,
+    '/': <IconUser size={20} />,
+    '/services': <IconServer size={20} />,
+    '/payments': <IconCreditCard size={20} />,
+    '/withdrawals': <IconReceipt size={20} />,
   };
 
   const enabledItems = menuItems.filter(item => item.enabled);
@@ -83,44 +120,60 @@ function BottomNavigation() {
     <Box
       style={{
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        bottom: 16,
+        left: 16,
+        right: 16,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        background: computedColorScheme === 'dark'
-          ? 'rgba(26, 27, 30, 0.85)'
-          : 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: computedColorScheme === 'dark'
-          ? '1px solid rgba(255, 255, 255, 0.1)'
-          : '1px solid rgba(0, 0, 0, 0.1)',
         zIndex: 1000,
       }}
     >
-      <Group justify="center" gap={0} style={{ padding: '8px 16px' }}>
-        {enabledItems.map((item) => {
-          const isActive = location.pathname === item.path ||
-            (item.path === '/' && location.pathname === '/');
-          return (
-            <ActionIcon
-              key={item.id}
-              variant="subtle"
-              size={56}
-              onClick={() => navigate(item.path)}
-              style={{
-                flexDirection: 'column',
-                height: 56,
-                borderRadius: 12,
-                color: isActive ? 'var(--mantine-color-blue-6)' : undefined,
-              }}
-            >
-              {iconMap[item.path]}
-              <Text size="xs" mt={4}>{item.label}</Text>
-            </ActionIcon>
-          );
-        })}
-      </Group>
+      <Box
+        style={{
+          background: computedColorScheme === 'dark'
+            ? 'rgba(40, 40, 45, 0.85)'
+            : 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRadius: 20,
+          border: computedColorScheme === 'dark'
+            ? '1px solid rgba(255, 255, 255, 0.1)'
+            : '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: computedColorScheme === 'dark'
+            ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+            : '0 8px 32px rgba(0, 0, 0, 0.12)',
+          padding: '8px 12px',
+        }}
+      >
+        <Group justify="space-around" gap={4}>
+          {enabledItems.map((item) => {
+            const isActive = location.pathname === item.path ||
+              (item.path === '/' && location.pathname === '/');
+            return (
+              <Box
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px 12px',
+                  borderRadius: 14,
+                  cursor: 'pointer',
+                  background: isActive
+                    ? (computedColorScheme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)')
+                    : 'transparent',
+                  color: isActive ? 'var(--mantine-color-blue-6)' : (computedColorScheme === 'dark' ? '#9ca3af' : '#6b7280'),
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {iconMap[item.path]}
+                <Text size="xs" mt={4} fw={isActive ? 600 : 400}>{item.label}</Text>
+              </Box>
+            );
+          })}
+        </Group>
+      </Box>
     </Box>
   );
 }
@@ -224,8 +277,9 @@ function AppContent() {
   // WebApp layout - без боковой панели, с нижней навигацией
   if (isTelegramWebApp) {
     return (
-      <Box style={{ minHeight: '100vh', paddingBottom: 80 }}>
-        <Box p="md">
+      <Box style={{ minHeight: '100vh', paddingBottom: 100 }}>
+        <WebAppHeader />
+        <Box px="md">
           <Routes>
             <Route path="/services" element={<Services />} />
             <Route path="/payments" element={<Payments />} />

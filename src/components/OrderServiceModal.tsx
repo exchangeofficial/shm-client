@@ -26,7 +26,7 @@ interface OrderServiceModalProps {
 
 const categoryLabels: Record<string, string> = {
   vpn: 'VPN',
-  proxy: 'Прокси',
+  proxy: 'VPN Подписка',
   web_tariff: 'Тарифы хостинга',
   web: 'Web хостинг',
   mysql: 'Базы данных',

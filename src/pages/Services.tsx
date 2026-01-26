@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, Text, Stack, Group, Badge, Button, Modal, ActionIcon, Loader, Center, Paper, Title, Tabs, Code, CopyButton, Tooltip, Accordion, Box } from '@mantine/core';
 import { IconQrcode, IconCopy, IconCheck, IconDownload, IconRefresh, IconChevronRight, IconTrash, IconPlus, IconPlayerStop } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
@@ -29,7 +29,7 @@ interface UserService {
 
 const categoryLabels: Record<string, string> = {
   vpn: 'VPN',
-  proxy: 'Прокси',
+  proxy: 'VPN Подписка',
   web_tariff: 'Тарифы хостинга',
   web: 'Web хостинг',
   mysql: 'Базы данных',
@@ -377,9 +377,10 @@ export default function Services() {
   const [selectedService, setSelectedService] = useState<UserService | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [orderModalOpened, { open: openOrderModal, close: closeOrderModal }] = useDisclosure(false);
+  const refreshAttemptsRef = useRef(0);
 
-  const fetchServices = async () => {
-    setLoading(true);
+  const fetchServices = async (background = false) => {
+    if (!background) setLoading(true);
     try {
       const response = await api.get('/user/service');
       const data: UserService[] = response.data.data || [];
@@ -399,16 +400,71 @@ export default function Services() {
       });
 
       setServices(rootServices);
+      return rootServices;
     } catch (error) {
       console.error('Failed to fetch services:', error);
+      return [];
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
+  };
+
+  // Проверяем есть ли услуги в процессе (включая дочерние)
+  const hasProgressServices = (serviceList: UserService[]): boolean => {
+    for (const service of serviceList) {
+      if (service.status === 'PROGRESS') return true;
+      if (service.children && hasProgressServices(service.children)) return true;
+    }
+    return false;
+  };
+
+  // Проверяем есть ли неоплаченные услуги (включая дочерние)
+  const hasNotPaidServices = (serviceList: UserService[]): boolean => {
+    for (const service of serviceList) {
+      if (service.status === 'NOT PAID') return true;
+      if (service.children && hasNotPaidServices(service.children)) return true;
+    }
+    return false;
   };
 
   useEffect(() => {
     fetchServices();
   }, []);
+
+  // Автообновление если есть услуги в статусе PROGRESS (1 сек, 3 сек)
+  useEffect(() => {
+    if (!services.length || loading) return;
+
+    const hasProgress = hasProgressServices(services);
+
+    if (hasProgress && refreshAttemptsRef.current < 2) {
+      const delay = refreshAttemptsRef.current === 0 ? 1000 : 3000;
+      const timer = setTimeout(async () => {
+        refreshAttemptsRef.current += 1;
+        await fetchServices(true);
+      }, delay);
+      return () => clearTimeout(timer);
+    }
+
+    // Сбрасываем счётчик если нет PROGRESS услуг
+    if (!hasProgress) {
+      refreshAttemptsRef.current = 0;
+    }
+  }, [services, loading]);
+
+  // Фоновое обновление каждые 5 сек если есть NOT PAID услуги
+  useEffect(() => {
+    if (!services.length || loading) return;
+
+    const hasNotPaid = hasNotPaidServices(services);
+    if (!hasNotPaid) return;
+
+    const interval = setInterval(() => {
+      fetchServices(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [services, loading]);
 
   const handleServiceClick = (service: UserService) => {
     setSelectedService(service);
@@ -440,7 +496,7 @@ export default function Services() {
           <Button leftSection={<IconPlus size={16} />} onClick={openOrderModal}>
             Заказать услугу
           </Button>
-          <Button leftSection={<IconRefresh size={16} />} variant="light" onClick={fetchServices}>
+          <Button leftSection={<IconRefresh size={16} />} variant="light" onClick={() => fetchServices()}>
             Обновить
           </Button>
         </Group>
@@ -502,6 +558,7 @@ export default function Services() {
             service={selectedService}
             onDelete={() => {
               close();
+              refreshAttemptsRef.current = 0; // Сброс для автообновления
               fetchServices();
             }}
           />
@@ -511,7 +568,10 @@ export default function Services() {
       <OrderServiceModal
         opened={orderModalOpened}
         onClose={closeOrderModal}
-        onOrderSuccess={fetchServices}
+        onOrderSuccess={() => {
+          refreshAttemptsRef.current = 0; // Сброс для автообновления
+          fetchServices();
+        }}
       />
     </Stack>
   );

@@ -62,7 +62,7 @@ export const useStore = create<AppState>((set) => ({
   ],
   themeConfig: { primaryColor: '#228be6', allowUserThemeChange: true },
   isAdmin: false,
-  telegramPhoto: null,
+  telegramPhoto: localStorage.getItem('shm_telegram_photo'),
 
   // Actions
   setUser: (user) => set({
@@ -75,9 +75,17 @@ export const useStore = create<AppState>((set) => ({
   setMenuItems: (items) => set({ menuItems: items }),
   setThemeConfig: (config) => set({ themeConfig: config }),
   setIsAdmin: (admin) => set({ isAdmin: admin }),
-  setTelegramPhoto: (photo) => set({ telegramPhoto: photo }),
+  setTelegramPhoto: (photo) => {
+    if (photo) {
+      localStorage.setItem('shm_telegram_photo', photo);
+    } else {
+      localStorage.removeItem('shm_telegram_photo');
+    }
+    set({ telegramPhoto: photo });
+  },
   logout: () => {
     localStorage.removeItem('shm_token');
+    localStorage.removeItem('shm_telegram_photo');
     set({ user: null, isAuthenticated: false, isAdmin: false, telegramPhoto: null });
   },
 }));
