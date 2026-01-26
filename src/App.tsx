@@ -10,27 +10,6 @@ import { useStore } from './store/useStore';
 import { auth } from './api/client';
 import { config } from './config';
 
-// Telegram WebApp types
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        initData: string;
-        initDataUnsafe: {
-          user?: {
-            id: number;
-            first_name: string;
-            last_name?: string;
-            username?: string;
-            photo_url?: string;
-          };
-        };
-        ready: () => void;
-      };
-    };
-  }
-}
-
 // Pages
 import Services from './pages/Services';
 import Payments from './pages/Payments';
