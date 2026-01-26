@@ -1,0 +1,13 @@
+services:
+  shm-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    environment:
+      # SHM API URL
+      - SHM_URL=http://api
+      # Optional: custom base path (e.g., /client)
+      # - SHM_BASE_PATH=/
+    restart: unless-stopped
