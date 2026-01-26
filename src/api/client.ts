@@ -13,7 +13,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('shm_token');
     if (token) {
-      config.headers.Authorization = `Basic ${token}`;
+      config.headers['session-id'] = token;
     }
     return config;
   },
@@ -23,7 +23,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthRequest = error.config?.url?.includes('/auth');
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('shm_token');
       window.location.href = '/';
     }
@@ -33,8 +34,11 @@ api.interceptors.response.use(
 
 export const auth = {
   login: async (username: string, password: string) => {
-    const credentials = btoa(`${username}:${password}`);
-    localStorage.setItem('shm_token', credentials);
+    const response = await api.post('/user/auth', { login: username, password });
+    const sessionId = response.data?.session_id || response.data?.id;
+    if (sessionId) {
+      localStorage.setItem('shm_token', sessionId);
+    }
     return api.get('/user');
   },
 
@@ -48,8 +52,9 @@ export const auth = {
       init_data: initData,
       profile: profile,
     });
-    if (response.data?.session_id) {
-      localStorage.setItem('shm_token', response.data.session_id);
+    const sessionId = response.data?.session_id || response.data?.id;
+    if (sessionId) {
+      localStorage.setItem('shm_token', sessionId);
     }
     return response;
   },
@@ -67,8 +72,9 @@ export const auth = {
       ...userData,
       register_if_not_exists: 1,
     });
-    if (response.data?.session_id) {
-      localStorage.setItem('shm_token', response.data.session_id);
+    const sessionId = response.data?.session_id || response.data?.id;
+    if (sessionId) {
+      localStorage.setItem('shm_token', sessionId);
     }
     return response;
   },
