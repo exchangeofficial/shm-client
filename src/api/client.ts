@@ -47,18 +47,6 @@ export const auth = {
     window.location.href = '/login';
   },
 
-  telegramAuth: async (initData: string, profile: string) => {
-    const response = await api.post('/telegram/webapp/auth', {
-      initData: initData,
-      profile: profile,
-    });
-    const sessionId = response.data?.session_id || response.data?.id;
-    if (sessionId) {
-      localStorage.setItem('shm_token', sessionId);
-    }
-    return response;
-  },
-
   telegramWidgetAuth: async (userData: {
     id: number;
     first_name?: string;

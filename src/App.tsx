@@ -8,7 +8,6 @@ import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 're
 import { IconServer, IconCreditCard, IconSun, IconMoon, IconUser, IconLogout, IconReceipt } from '@tabler/icons-react';
 import { useStore } from './store/useStore';
 import { auth } from './api/client';
-import { config } from './config';
 
 // Pages
 import Services from './pages/Services';
@@ -129,7 +128,7 @@ function AppContent() {
   const [opened, { toggle, close }] = useDisclosure();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, menuItems, themeConfig, isAuthenticated, isLoading, setUser, setTelegramPhoto, setIsLoading, logout } = useStore();
+  const { user, menuItems, themeConfig, isAuthenticated, isLoading, setUser, setIsLoading, logout } = useStore();
   const [isTelegramWebApp] = useState(isInsideTelegramWebApp);
 
   // Инициализация Telegram WebApp
@@ -179,33 +178,6 @@ function AppContent() {
     const checkAuth = async () => {
       const token = localStorage.getItem('shm_token');
 
-      // Если есть Telegram WebApp и включена автоавторизация - авторизуемся через него
-      const tgWebApp = window.Telegram?.WebApp;
-      const hasTelegramWebApp = !!tgWebApp?.initData && config.TELEGRAM_WEBAPP_AUTH_ENABLE === 'true';
-
-      if (hasTelegramWebApp && tgWebApp) {
-        tgWebApp.ready();
-        tgWebApp.expand();
-        try {
-          await auth.telegramAuth(tgWebApp.initData, config.TELEGRAM_PROFILE);
-          const response = await auth.getCurrentUser();
-          const responseData = response.data.data;
-          const userData = Array.isArray(responseData) ? responseData[0] : responseData;
-          setUser(userData);
-
-          // Сохраняем фото из Telegram WebApp
-          const photoUrl = tgWebApp.initDataUnsafe?.user?.photo_url;
-          if (photoUrl) {
-            setTelegramPhoto(photoUrl);
-          }
-        } catch {
-          localStorage.removeItem('shm_token');
-        } finally {
-          setIsLoading(false);
-        }
-        return;
-      }
-
       // Обычная проверка токена
       if (!token) {
         setIsLoading(false);
@@ -225,7 +197,7 @@ function AppContent() {
     };
 
     checkAuth();
-  }, [setUser, setTelegramPhoto, setIsLoading]);
+  }, [setUser, setIsLoading]);
 
   const iconMap: Record<string, React.ReactNode> = {
     '/': <IconUser size={16} />,

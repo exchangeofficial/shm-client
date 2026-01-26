@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Text, Stack, Button, TextInput, PasswordInput, Divider, Title, Center } from '@mantine/core';
-import { IconBrandTelegram, IconLogin, IconUserPlus } from '@tabler/icons-react';
+import { IconLogin, IconUserPlus } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { auth } from '../api/client';
 import { useStore } from '../store/useStore';
@@ -53,13 +53,6 @@ export default function Login() {
         (tgWebApp.initData && tgWebApp.initData.length > 0) ||
         tgWebApp.initDataUnsafe?.user?.id
       ));
-      console.log('Telegram WebApp check:', {
-        hasTelegram: !!window.Telegram,
-        hasWebApp: !!tgWebApp,
-        initData: tgWebApp?.initData,
-        user: tgWebApp?.initDataUnsafe?.user,
-        isInside
-      });
       setIsInsideTelegramWebApp(isInside);
     };
 
@@ -71,16 +64,8 @@ export default function Login() {
     return () => clearTimeout(timer);
   }, []);
 
-  const hasTelegramWebApp = isInsideTelegramWebApp && config.TELEGRAM_WEBAPP_AUTH_ENABLE === 'true';
   // Виджет показываем только если НЕ внутри WebApp
   const hasTelegramWidget = !isInsideTelegramWebApp && !!config.TELEGRAM_BOT_NAME && config.TELEGRAM_BOT_AUTH_ENABLE === 'true';
-
-  useEffect(() => {
-    if (hasTelegramWebApp) {
-      window.Telegram?.WebApp?.ready();
-      handleTelegramWebAppAuth();
-    }
-  }, [hasTelegramWebApp]);
 
   const handleLogin = async () => {
     if (!formData.login || !formData.password) {
@@ -136,34 +121,6 @@ export default function Login() {
     }
   };
 
-  // Авторизация через Telegram WebApp (initData)
-  const handleTelegramWebAppAuth = async () => {
-    const tgWebApp = window.Telegram?.WebApp;
-
-    if (tgWebApp && tgWebApp.initData) {
-      setLoading(true);
-      try {
-        await auth.telegramAuth(tgWebApp.initData, config.TELEGRAM_PROFILE);
-        const userResponse = await auth.getCurrentUser();
-        const responseData = userResponse.data.data;
-        const userData = Array.isArray(responseData) ? responseData[0] : responseData;
-        setUser(userData);
-
-        // Сохраняем фото из Telegram WebApp
-        const photoUrl = tgWebApp.initDataUnsafe?.user?.photo_url;
-        if (photoUrl) {
-          setTelegramPhoto(photoUrl);
-        }
-
-        notifications.show({ title: 'Успешно', message: 'Авторизация через Telegram', color: 'green' });
-      } catch {
-        notifications.show({ title: 'Ошибка', message: 'Не удалось авторизоваться через Telegram', color: 'red' });
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
   // Авторизация через Telegram Login Widget
   const handleTelegramWidgetAuth = async (telegramUser: TelegramUser) => {
     setLoading(true);
@@ -198,23 +155,6 @@ export default function Login() {
               {mode === 'login' ? 'Войдите в личный кабинет' : 'Создайте аккаунт'}
             </Text>
           </div>
-
-          {hasTelegramWebApp && (
-            <>
-              <Button
-                leftSection={<IconBrandTelegram size={20} />}
-                variant="filled"
-                color="blue"
-                size="md"
-                onClick={handleTelegramWebAppAuth}
-                loading={loading}
-              >
-                Войти через Telegram
-              </Button>
-
-              <Divider label="или" labelPosition="center" />
-            </>
-          )}
 
           {hasTelegramWidget && (
             <>
