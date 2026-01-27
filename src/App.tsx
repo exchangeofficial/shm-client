@@ -9,6 +9,7 @@ import { IconServer, IconCreditCard, IconSun, IconMoon, IconUser, IconLogout, Ic
 import { useTranslation } from 'react-i18next';
 import { useStore } from './store/useStore';
 import { auth } from './api/client';
+import { getCookie, removeCookie } from './api/cookie';
 import { config } from './config';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
@@ -242,7 +243,7 @@ function AppContent() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('shm_token');
+      const token = getCookie();
 
       // Обычная проверка токена
       if (!token) {
@@ -256,7 +257,7 @@ function AppContent() {
         const userData = Array.isArray(responseData) ? responseData[0] : responseData;
         setUser(userData);
       } catch {
-        localStorage.removeItem('shm_token');
+        removeCookie();
       } finally {
         setIsLoading(false);
       }

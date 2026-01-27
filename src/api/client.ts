@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCookie, setCookie, removeCookie, extendCookie } from './cookie';
 
 // API client for SHM backend
 export const api = axios.create({
@@ -11,7 +12,7 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('shm_token');
+    const token = getCookie();
     if (token) {
       config.headers['session-id'] = token;
     }
@@ -21,11 +22,15 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Extend cookie on each successful response
+    extendCookie();
+    return response;
+  },
   (error) => {
     const isAuthRequest = error.config?.url?.includes('/auth');
     if (error.response?.status === 401 && !isAuthRequest) {
-      localStorage.removeItem('shm_token');
+      removeCookie();
       window.location.href = '/';
     }
     return Promise.reject(error);
@@ -37,13 +42,13 @@ export const auth = {
     const response = await api.post('/user/auth', { login: username, password });
     const sessionId = response.data?.session_id || response.data?.id;
     if (sessionId) {
-      localStorage.setItem('shm_token', sessionId);
+      setCookie(sessionId);
     }
     return api.get('/user');
   },
 
   logout: () => {
-    localStorage.removeItem('shm_token');
+    removeCookie();
     window.location.href = '/login';
   },
 
@@ -62,7 +67,7 @@ export const auth = {
     });
     const sessionId = response.data?.session_id || response.data?.id;
     if (sessionId) {
-      localStorage.setItem('shm_token', sessionId);
+      setCookie(sessionId);
     }
     return response;
   },

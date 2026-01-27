@@ -84,7 +84,6 @@ export const useStore = create<AppState>((set) => ({
     set({ telegramPhoto: photo });
   },
   logout: () => {
-    localStorage.removeItem('shm_token');
     localStorage.removeItem('shm_telegram_photo');
     set({ user: null, isAuthenticated: false, isAdmin: false, telegramPhoto: null });
   },
