@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, Text, Stack, Group, Badge, Button, Modal, ActionIcon, Loader, Center, Paper, Title, Tabs, Code, CopyButton, Tooltip, Accordion, Box } from '@mantine/core';
 import { IconQrcode, IconCopy, IconCheck, IconDownload, IconRefresh, IconChevronRight, IconTrash, IconPlus, IconPlayerStop } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
+import { useTranslation } from 'react-i18next';
 import { api, userApi } from '../api/client';
 import { notifications } from '@mantine/notifications';
 import QrModal from '../components/QrModal';
@@ -27,24 +28,13 @@ interface UserService {
   children?: UserService[];
 }
 
-const categoryLabels: Record<string, string> = {
-  vpn: 'VPN',
-  proxy: 'VPN Подписка',
-  web_tariff: 'Тарифы хостинга',
-  web: 'Web хостинг',
-  mysql: 'Базы данных',
-  mail: 'Почта',
-  hosting: 'Хостинг',
-  other: 'Прочее',
-};
-
-const statusLabels: Record<string, { label: string; color: string }> = {
-  'ACTIVE': { label: 'Активна', color: 'green' },
-  'NOT PAID': { label: 'Не оплачена', color: 'blue' },
-  'BLOCK': { label: 'Заблокирована', color: 'red' },
-  'PROGRESS': { label: 'В процессе', color: 'yellow' },
-  'ERROR': { label: 'Ошибка', color: 'orange' },
-  'INIT': { label: 'Инициализация', color: 'gray' },
+const statusColors: Record<string, string> = {
+  'ACTIVE': 'green',
+  'NOT PAID': 'blue',
+  'BLOCK': 'red',
+  'PROGRESS': 'yellow',
+  'ERROR': 'orange',
+  'INIT': 'gray',
 };
 
 function normalizeCategory(category: string): string {
@@ -75,6 +65,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
   const [stopping, setStopping] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
+  const { t, i18n } = useTranslation();
 
   const canDelete = ['BLOCK', 'NOT PAID', 'ERROR'].includes(service.status);
   const canStop = service.status === 'ACTIVE';
@@ -84,16 +75,16 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
     try {
       await api.delete(`/user/service?user_service_id=${service.user_service_id}`);
       notifications.show({
-        title: 'Успешно',
-        message: 'Услуга удалена',
+        title: t('common.success'),
+        message: t('services.serviceDeleted'),
         color: 'green',
       });
       setConfirmDelete(false);
       onDelete?.();
     } catch (error) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось удалить услугу',
+        title: t('common.error'),
+        message: t('services.serviceDeleteError'),
         color: 'red',
       });
     } finally {
@@ -106,16 +97,16 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
     try {
       await userApi.stopService(service.user_service_id);
       notifications.show({
-        title: 'Успешно',
-        message: 'Услуга остановлена',
+        title: t('common.success'),
+        message: t('services.serviceStopped'),
         color: 'green',
       });
       setConfirmStop(false);
       onDelete?.();
     } catch (error) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось остановить услугу',
+        title: t('common.error'),
+        message: t('services.serviceStopError'),
         color: 'red',
       });
     } finally {
@@ -166,15 +157,16 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
   const isVpn = category === 'vpn';
   const isProxy = category === 'proxy';
   const isVpnOrProxy = isVpn || isProxy;
-  const statusInfo = statusLabels[service.status] || { label: service.status, color: 'gray' };
+  const statusColor = statusColors[service.status] || 'gray';
+  const statusLabel = t(`status.${service.status}`, service.status);
 
   return (
     <Stack gap="md">
       <Group justify="space-between">
         <div>
           <Text fw={700} size="lg">{service.service.name}</Text>
-          <Badge color={statusInfo.color} variant="light">
-            {statusInfo.label}
+          <Badge color={statusColor} variant="light">
+            {statusLabel}
           </Badge>
         </div>
         <Text size="sm" c="dimmed">ID: {service.user_service_id}</Text>
@@ -182,36 +174,36 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
 
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
-
-          <Tabs.Tab value="info">Информация</Tabs.Tab>
-          {isVpnOrProxy &&service.status === 'ACTIVE' && <Tabs.Tab value="config">Подключение</Tabs.Tab>}
+          <Tabs.Tab value="info">{t('services.info')}</Tabs.Tab>
+          {isVpnOrProxy && service.status === 'ACTIVE' && <Tabs.Tab value="config">{t('services.connection')}</Tabs.Tab>}
         </Tabs.List>
 
         <Tabs.Panel value="info" pt="md">
           <Stack gap="xs">
             <Group justify="space-between">
-              <Text size="sm" c="dimmed">Статус:</Text>
-              <Badge color={statusInfo.color} variant="light">{statusInfo.label}</Badge>
+              <Text size="sm" c="dimmed">{t('services.status')}:</Text>
+              <Badge color={statusColor} variant="light">{statusLabel}</Badge>
             </Group>
             <Group justify="space-between">
-              <Text size="sm" c="dimmed">Стоимость:</Text>
-              <Text size="sm">{service.service.cost} ₽</Text>
+              <Text size="sm" c="dimmed">{t('services.cost')}:</Text>
+              <Text size="sm">{service.service.cost} {t('common.currency')}</Text>
             </Group>
             {service.expire && (
               <Group justify="space-between">
-                <Text size="sm" c="dimmed">Действует до:</Text>
-                <Text size="sm">{new Date(service.expire as string).toLocaleDateString('ru-RU')}</Text>
+                <Text size="sm" c="dimmed">{t('services.validUntil')}:</Text>
+                <Text size="sm">{new Date(service.expire as string).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')}</Text>
               </Group>
             )}
             {service.children && service.children.length > 0 && (
               <>
-                <Text size="sm" c="dimmed" mt="md">Включённые услуги:</Text>
+                <Text size="sm" c="dimmed" mt="md">{t('services.includedServices')}:</Text>
                 {service.children.map((child) => {
-                  const childStatus = statusLabels[child.status] || { label: child.status, color: 'gray' };
+                  const childStatusColor = statusColors[child.status] || 'gray';
+                  const childStatusLabel = t(`status.${child.status}`, child.status);
                   return (
                     <Group key={child.user_service_id} justify="space-between" ml="md">
                       <Text size="sm">{child.service.name}</Text>
-                      <Badge size="sm" color={childStatus.color} variant="light">{childStatus.label}</Badge>
+                      <Badge size="sm" color={childStatusColor} variant="light">{childStatusLabel}</Badge>
                     </Group>
                   );
                 })}
@@ -225,12 +217,12 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
             <Stack gap="md">
               {isProxy && subscriptionUrl && (
                 <Paper withBorder p="md" radius="md">
-                  <Text size="sm" fw={500} mb="xs">Ссылка подписки</Text>
+                  <Text size="sm" fw={500} mb="xs">{t('services.subscriptionLink')}</Text>
                   <Group gap="xs">
                     <Code style={{ flex: 1, wordBreak: 'break-all' }}>{subscriptionUrl}</Code>
                     <CopyButton value={subscriptionUrl}>
                       {({ copied, copy }) => (
-                        <Tooltip label={copied ? 'Скопировано!' : 'Копировать'}>
+                        <Tooltip label={copied ? t('common.copied') : t('common.copy')}>
                           <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
                             {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
                           </ActionIcon>
@@ -248,7 +240,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                     variant="light"
                     onClick={() => setQrModalOpen(true)}
                   >
-                    QR-код
+                    {t('services.qrCode')}
                   </Button>
                 ) : null}
 
@@ -266,7 +258,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                     URL.revokeObjectURL(url);
                   }}
                 >
-                  Скачать конфиг
+                  {t('services.downloadConfig')}
                 </Button>
               )}
               </Group>
@@ -275,7 +267,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                 opened={qrModalOpen}
                 onClose={() => setQrModalOpen(false)}
                 data={isVpn ? (storageData || '') : (subscriptionUrl || '')}
-                title={isVpn ? 'QR-код конфигурации VPN' : 'QR-код подписки'}
+                title={isVpn ? t('services.vpnQrTitle') : t('services.subscriptionQrTitle')}
                 filename={isVpn ? `vpn${service.user_service_id}` : undefined}
               />
             </Stack>
@@ -292,7 +284,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
           mt="md"
           fullWidth
         >
-          Остановить услугу
+          {t('services.stopService')}
         </Button>
       )}
 
@@ -305,7 +297,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
           mt="md"
           fullWidth
         >
-          Удалить услугу
+          {t('services.deleteService')}
         </Button>
       )}
 
@@ -313,9 +305,9 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
         opened={confirmStop}
         onClose={() => setConfirmStop(false)}
         onConfirm={handleStop}
-        title="Остановить услугу"
-        message="Услуга будет заблокирована. Восстановление возможно только через поддержку."
-        confirmLabel="Остановить"
+        title={t('services.stopServiceTitle')}
+        message={t('services.stopServiceMessage')}
+        confirmLabel={t('services.stop')}
         confirmColor="orange"
         loading={stopping}
       />
@@ -324,9 +316,9 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
         opened={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         onConfirm={handleDelete}
-        title="Удалить услугу"
-        message="Вы уверены, что хотите удалить эту услугу? Это действие необратимо."
-        confirmLabel="Удалить"
+        title={t('services.deleteServiceTitle')}
+        message={t('services.deleteServiceMessage')}
+        confirmLabel={t('common.delete')}
         confirmColor="red"
         loading={deleting}
       />
@@ -335,7 +327,9 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
 }
 
 function ServiceCard({ service, onClick, isChild = false }: { service: UserService; onClick: () => void; isChild?: boolean }) {
-  const statusInfo = statusLabels[service.status] || { label: service.status, color: 'gray' };
+  const { t, i18n } = useTranslation();
+  const statusColor = statusColors[service.status] || 'gray';
+  const statusLabel = t(`status.${service.status}`, service.status);
 
   return (
     <Card
@@ -353,17 +347,17 @@ function ServiceCard({ service, onClick, isChild = false }: { service: UserServi
             <Text fw={500} size={isChild ? 'sm' : 'md'}>{service.service.name}</Text>
             {service.expire && (
               <Text size="xs" c="dimmed">
-                до {new Date(service.expire as string).toLocaleDateString('ru-RU')}
+                {new Date(service.expire as string).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')}
               </Text>
             )}
           </div>
         </Group>
         <Group gap="sm">
           {service.service.cost > 0 && (
-            <Text size="sm" c="dimmed">{service.service.cost} ₽</Text>
+            <Text size="sm" c="dimmed">{service.service.cost} {t('common.currency')}</Text>
           )}
-          <Badge color={statusInfo.color} variant="light" size={isChild ? 'sm' : 'md'}>
-            {statusInfo.label}
+          <Badge color={statusColor} variant="light" size={isChild ? 'sm' : 'md'}>
+            {statusLabel}
           </Badge>
         </Group>
       </Group>
@@ -378,6 +372,7 @@ export default function Services() {
   const [opened, { open, close }] = useDisclosure(false);
   const [orderModalOpened, { open: openOrderModal, close: closeOrderModal }] = useDisclosure(false);
   const refreshAttemptsRef = useRef(0);
+  const { t } = useTranslation();
 
   const fetchServices = async (background = false) => {
     if (!background) setLoading(true);
@@ -491,13 +486,13 @@ export default function Services() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={2}>Мои услуги</Title>
+        <Title order={2}>{t('services.title')}</Title>
         <Group>
           <Button leftSection={<IconPlus size={16} />} onClick={openOrderModal}>
-            Заказать услугу
+            {t('services.orderService')}
           </Button>
           <Button leftSection={<IconRefresh size={16} />} variant="light" onClick={() => fetchServices()}>
-            Обновить
+            {t('common.refresh')}
           </Button>
         </Group>
       </Group>
@@ -506,9 +501,9 @@ export default function Services() {
         <Paper withBorder p="xl" radius="md">
           <Center>
             <Stack align="center" gap="md">
-              <Text c="dimmed">У вас пока нет активных услуг</Text>
+              <Text c="dimmed">{t('services.noServices')}</Text>
               <Button leftSection={<IconPlus size={16} />} onClick={openOrderModal}>
-                Заказать услугу
+                {t('services.orderService')}
               </Button>
             </Stack>
           </Center>
@@ -519,7 +514,7 @@ export default function Services() {
             <Accordion.Item key={category} value={category}>
               <Accordion.Control>
                 <Group>
-                  <Text fw={500}>{categoryLabels[category] || category}</Text>
+                  <Text fw={500}>{t(`categories.${category}`, category)}</Text>
                   <Badge variant="light" size="sm">{categoryServices.length}</Badge>
                 </Group>
               </Accordion.Control>
@@ -552,13 +547,13 @@ export default function Services() {
         </Accordion>
       )}
 
-      <Modal opened={opened} onClose={close} title="Детали услуги" size="lg">
+      <Modal opened={opened} onClose={close} title={t('services.serviceDetails')} size="lg">
         {selectedService && (
           <ServiceDetail
             service={selectedService}
             onDelete={() => {
               close();
-              refreshAttemptsRef.current = 0; // Сброс для автообновления
+              refreshAttemptsRef.current = 0;
               fetchServices();
             }}
           />
@@ -569,7 +564,7 @@ export default function Services() {
         opened={orderModalOpened}
         onClose={closeOrderModal}
         onOrderSuccess={() => {
-          refreshAttemptsRef.current = 0; // Сброс для автообновления
+          refreshAttemptsRef.current = 0;
           fetchServices();
         }}
       />

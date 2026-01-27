@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Text, Stack, Button, TextInput, PasswordInput, Divider, Title, Center } from '@mantine/core';
 import { IconLogin, IconUserPlus } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useTranslation } from 'react-i18next';
 import { auth } from '../api/client';
 import { useStore } from '../store/useStore';
 import TelegramLoginButton, { TelegramUser } from '../components/TelegramLoginButton';
@@ -44,6 +45,7 @@ export default function Login() {
   const [formData, setFormData] = useState({ login: '', password: '', confirmPassword: '' });
   const [isInsideTelegramWebApp, setIsInsideTelegramWebApp] = useState(false);
   const { setUser, setTelegramPhoto } = useStore();
+  const { t } = useTranslation();
 
   // Проверяем Telegram WebApp при монтировании и после загрузки скрипта
   useEffect(() => {
@@ -69,7 +71,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!formData.login || !formData.password) {
-      notifications.show({ title: 'Ошибка', message: 'Заполните все поля', color: 'red' });
+      notifications.show({ title: t('common.error'), message: t('auth.fillAllFields'), color: 'red' });
       return;
     }
 
@@ -80,9 +82,9 @@ export default function Login() {
       const responseData = userResponse.data.data;
       const userData = Array.isArray(responseData) ? responseData[0] : responseData;
       setUser(userData);
-      notifications.show({ title: 'Успешно', message: 'Вы вошли в систему', color: 'green' });
+      notifications.show({ title: t('common.success'), message: t('auth.loginSuccess'), color: 'green' });
     } catch {
-      notifications.show({ title: 'Ошибка', message: 'Неверный логин или пароль', color: 'red' });
+      notifications.show({ title: t('common.error'), message: t('auth.loginError'), color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -90,23 +92,23 @@ export default function Login() {
 
   const handleRegister = async () => {
     if (!formData.login || !formData.password) {
-      notifications.show({ title: 'Ошибка', message: 'Заполните все поля', color: 'red' });
+      notifications.show({ title: t('common.error'), message: t('auth.fillAllFields'), color: 'red' });
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      notifications.show({ title: 'Ошибка', message: 'Пароли не совпадают', color: 'red' });
+      notifications.show({ title: t('common.error'), message: t('auth.passwordsMismatch'), color: 'red' });
       return;
     }
 
     setLoading(true);
     try {
       await auth.register(formData.login, formData.password);
-      notifications.show({ title: 'Успешно', message: 'Регистрация прошла успешно. Теперь войдите.', color: 'green' });
+      notifications.show({ title: t('common.success'), message: t('auth.registerSuccess'), color: 'green' });
       // Переключаемся на авторизацию, сохраняя логин
       setMode('login');
       setFormData({ ...formData, confirmPassword: '' });
     } catch {
-      notifications.show({ title: 'Ошибка', message: 'Не удалось зарегистрироваться', color: 'red' });
+      notifications.show({ title: t('common.error'), message: t('auth.registerError'), color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -137,9 +139,9 @@ export default function Login() {
         setTelegramPhoto(telegramUser.photo_url);
       }
 
-      notifications.show({ title: 'Успешно', message: 'Авторизация через Telegram', color: 'green' });
+      notifications.show({ title: t('common.success'), message: t('auth.telegramAuth'), color: 'green' });
     } catch {
-      notifications.show({ title: 'Ошибка', message: 'Не удалось авторизоваться через Telegram', color: 'red' });
+      notifications.show({ title: t('common.error'), message: t('auth.telegramAuthError'), color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -152,7 +154,7 @@ export default function Login() {
           <div>
             <Title order={2} ta="center">{config.APP_NAME}</Title>
             <Text size="sm" c="dimmed" ta="center">
-              {mode === 'login' ? 'Войдите в личный кабинет' : 'Создайте аккаунт'}
+              {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
             </Text>
           </div>
 
@@ -167,23 +169,23 @@ export default function Login() {
                 />
               </Center>
 
-              <Divider label="или" labelPosition="center" />
+              <Divider label={t('common.or')} labelPosition="center" />
             </>
           )}
 
           <form onSubmit={handleSubmit}>
             <Stack gap="sm">
               <TextInput
-                label="Логин"
-                placeholder="Введите логин"
+                label={t('auth.loginLabel')}
+                placeholder={t('auth.loginPlaceholder')}
                 value={formData.login}
                 onChange={(e) => setFormData({ ...formData, login: e.target.value })}
                 autoComplete="username"
                 name="username"
               />
               <PasswordInput
-                label="Пароль"
-                placeholder="Введите пароль"
+                label={t('auth.passwordLabel')}
+                placeholder={t('auth.passwordPlaceholder')}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -191,8 +193,8 @@ export default function Login() {
               />
               {mode === 'register' && (
                 <PasswordInput
-                  label="Подтвердите пароль"
-                  placeholder="Повторите пароль"
+                  label={t('auth.confirmPasswordLabel')}
+                  placeholder={t('auth.confirmPasswordPlaceholder')}
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   autoComplete="new-password"
@@ -204,7 +206,7 @@ export default function Login() {
                 leftSection={mode === 'login' ? <IconLogin size={18} /> : <IconUserPlus size={18} />}
                 loading={loading}
               >
-                {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+                {mode === 'login' ? t('auth.login') : t('auth.register')}
               </Button>
             </Stack>
           </form>
@@ -212,16 +214,16 @@ export default function Login() {
           <Text size="sm" ta="center">
             {mode === 'login' ? (
               <>
-                Нет аккаунта?{' '}
+                {t('auth.noAccount')}{' '}
                 <Text component="span" c="blue" style={{ cursor: 'pointer' }} onClick={() => setMode('register')}>
-                  Зарегистрироваться
+                  {t('auth.register')}
                 </Text>
               </>
             ) : (
               <>
-                Уже есть аккаунт?{' '}
+                {t('auth.hasAccount')}{' '}
                 <Text component="span" c="blue" style={{ cursor: 'pointer' }} onClick={() => setMode('login')}>
-                  Войти
+                  {t('auth.login')}
                 </Text>
               </>
             )}

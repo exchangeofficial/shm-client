@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Text, Stack, Group, Button, TextInput, Avatar, Title, Modal, PasswordInput, Loader, Center, Collapse, useMantineColorScheme } from '@mantine/core';
 import { IconUser, IconPhone, IconBrandTelegram, IconLock, IconWallet, IconCreditCard, IconChevronDown, IconChevronUp, IconCreditCardPay, IconTrash } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useTranslation } from 'react-i18next';
 import { userApi, telegramApi } from '../api/client';
 import PayModal from '../components/PayModal';
 import PromoModal from '../components/PromoModal';
@@ -74,6 +75,7 @@ export default function Profile() {
   const [autopaymentToDelete, setAutopaymentToDelete] = useState<{ paysystem: string; name: string } | null>(null);
   const [deletingAutopayment, setDeletingAutopayment] = useState(false);
   const { colorScheme } = useMantineColorScheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -124,14 +126,14 @@ export default function Profile() {
       setProfile((prev) => prev ? { ...prev, ...formData } : null);
       setEditing(false);
       notifications.show({
-        title: 'Успешно',
-        message: 'Профиль обновлен',
+        title: t('common.success'),
+        message: t('profile.profileUpdated'),
         color: 'green',
       });
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось обновить профиль',
+        title: t('common.error'),
+        message: t('profile.profileUpdateError'),
         color: 'red',
       });
     }
@@ -140,8 +142,8 @@ export default function Profile() {
   const handleChangePassword = async () => {
     if (!newPassword) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Введите новый пароль',
+        title: t('common.error'),
+        message: t('profile.enterNewPassword'),
         color: 'red',
       });
       return;
@@ -151,14 +153,14 @@ export default function Profile() {
       setPasswordModalOpen(false);
       setNewPassword('');
       notifications.show({
-        title: 'Успешно',
-        message: 'Пароль изменен',
+        title: t('common.success'),
+        message: t('profile.passwordChanged'),
         color: 'green',
       });
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось изменить пароль',
+        title: t('common.error'),
+        message: t('profile.passwordChangeError'),
         color: 'red',
       });
     }
@@ -197,16 +199,16 @@ export default function Profile() {
       setDeleteConfirmOpen(false);
       setAutopaymentToDelete(null);
       notifications.show({
-        title: 'Успешно',
-        message: `Платёжный метод "${autopaymentToDelete.name}" удалён`,
+        title: t('common.success'),
+        message: t('payments.paymentMethodDeleted', { name: autopaymentToDelete.name }),
         color: 'green',
       });
       // Обновляем список с сервера
       refreshAutopayments();
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось удалить платёжный метод',
+        title: t('common.error'),
+        message: t('payments.paymentMethodDeleteError'),
         color: 'red',
       });
     } finally {
@@ -226,14 +228,14 @@ export default function Profile() {
       setTelegramUsername(telegramInput.trim().replace('@', '') || null);
       setTelegramModalOpen(false);
       notifications.show({
-        title: 'Успешно',
-        message: 'Telegram сохранён',
+        title: t('common.success'),
+        message: t('profile.telegramSaved'),
         color: 'green',
       });
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось сохранить Telegram',
+        title: t('common.error'),
+        message: t('profile.telegramSaveError'),
         color: 'red',
       });
     } finally {
@@ -251,7 +253,7 @@ export default function Profile() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>Профиль</Title>
+      <Title order={2}>{t('profile.title')}</Title>
 
       <Card withBorder radius="md" p="lg">
         <Group>
@@ -264,7 +266,7 @@ export default function Profile() {
             {!telegramPhoto && (profile.full_name?.charAt(0) || profile.login?.charAt(0)?.toUpperCase() || '?')}
           </Avatar>
           <div>
-            <Text fw={500} size="lg">{profile.full_name || profile.login || 'Пользователь'}</Text>
+            <Text fw={500} size="lg">{profile.full_name || profile.login || t('profile.user')}</Text>
             <Text size="sm" c="dimmed">{profile.login || '-'}</Text>
           </div>
         </Group>
@@ -278,9 +280,9 @@ export default function Profile() {
             onClick={() => setForecastOpen(!forecastOpen)}
           >
             <div>
-              <Text fw={500}>Прогноз оплаты</Text>
+              <Text fw={500}>{t('profile.forecast')}</Text>
               <Text size="sm" c={forecast.total > 0 ? 'red' : 'green'} fw={600}>
-                К оплате: {forecast.total.toFixed(2)} ₽
+                {t('profile.toPay')}: {forecast.total.toFixed(2)} {t('common.currency')}
               </Text>
             </div>
             {forecastOpen ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
@@ -302,15 +304,15 @@ export default function Profile() {
                     <div style={{ flex: 1 }}>
                       <Text size="sm" fw={500}>{item.name}</Text>
                       <Text size="xs" c="dimmed">
-                        {item.months} мес. × {item.qnt} шт.
+                        {item.months} {t('common.months')} × {item.qnt} {t('common.pieces')}
                       </Text>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <Text size="sm" fw={600} c={item.status === 'NOT PAID' ? 'red' : 'green'}>
-                        {item.total.toFixed(2)} ₽
+                        {item.total.toFixed(2)} {t('common.currency')}
                       </Text>
                       <Text size="xs" c={item.status === 'NOT PAID' ? 'red' : 'green'}>
-                        {item.status === 'NOT PAID' ? 'Не оплачено' : item.status}
+                        {item.status === 'NOT PAID' ? t('profile.notPaid') : item.status}
                       </Text>
                     </div>
                   </Group>
@@ -324,15 +326,15 @@ export default function Profile() {
       <Card withBorder radius="md" p="lg">
         <Group justify="space-between" align="center">
           <div>
-            <Text size="sm" c="dimmed">Баланс</Text>
+            <Text size="sm" c="dimmed">{t('profile.balance')}</Text>
             <Group gap="xs" align="baseline">
               <IconWallet size={24} />
-              <Text size="xl" fw={700}>{profile.balance?.toFixed(2) || '0.00'} ₽</Text>
+              <Text size="xl" fw={700}>{profile.balance?.toFixed(2) || '0.00'} {t('common.currency')}</Text>
             </Group>
-            {profile.credit && profile.credit > 0 && <Text size="xm" c="dimmed">Кредит: {profile.credit}</Text>}
+            {profile.credit && profile.credit > 0 && <Text size="xm" c="dimmed">{t('profile.credit')}: {profile.credit}</Text>}
           </div>
           <Button leftSection={<IconCreditCard size={18} />} onClick={() => setPayModalOpen(true)}>
-            Пополнить
+            {t('profile.topUp')}
           </Button>
         </Group>
       </Card>
@@ -340,10 +342,10 @@ export default function Profile() {
       <Card withBorder radius="md" p="lg">
         <Group justify="space-between" align="center">
           <div>
-              <Text size="xm" c="dimmed">Бонусы: {profile.bonus}</Text>
+              <Text size="xm" c="dimmed">{t('profile.bonus')}: {profile.bonus}</Text>
           </div>
           <Button onClick={() => setPromoModalOpen(true)}>
-            Ввести промокод
+            {t('profile.enterPromo')}
           </Button>
         </Group>
       </Card>
@@ -358,10 +360,10 @@ export default function Profile() {
             <div>
               <Text fw={500}>
                 <IconCreditCardPay size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
-                Сохранённые способы оплаты
+                {t('profile.savedPaymentMethods')}
               </Text>
               <Text size="sm" c="dimmed">
-                {autopayments.length} {autopayments.length === 1 ? 'метод' : 'методов'}
+                {autopayments.length} {autopayments.length === 1 ? t('profile.method') : t('profile.methods')}
               </Text>
             </div>
             {autopaymentsOpen ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
@@ -374,7 +376,7 @@ export default function Profile() {
                     <div>
                       <Text size="sm" fw={500}>{ap.name}</Text>
                       {ap.recurring === 1 && (
-                        <Text size="xs" c="dimmed">Автоплатёж включён</Text>
+                        <Text size="xs" c="dimmed">{t('profile.autopaymentEnabled')}</Text>
                       )}
                     </div>
                     <Button
@@ -387,7 +389,7 @@ export default function Profile() {
                         openDeleteConfirm(ap.paysystem, ap.name);
                       }}
                     >
-                      Удалить
+                      {t('common.delete')}
                     </Button>
                   </Group>
                 </Card>
@@ -399,18 +401,18 @@ export default function Profile() {
 
       <Card withBorder radius="md" p="lg">
         <Group justify="space-between" mb="md">
-          <Text fw={500}>Личные данные</Text>
+          <Text fw={500}>{t('profile.personalData')}</Text>
           {!editing ? (
             <Button variant="light" size="xs" onClick={() => setEditing(true)}>
-              Редактировать
+              {t('common.edit')}
             </Button>
           ) : (
             <Group gap="xs">
               <Button variant="light" size="xs" color="gray" onClick={() => setEditing(false)}>
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button size="xs" onClick={handleSave}>
-                Сохранить
+                {t('common.save')}
               </Button>
             </Group>
           )}
@@ -418,14 +420,14 @@ export default function Profile() {
 
         <Stack gap="md">
           <TextInput
-            label="Полное имя"
+            label={t('profile.fullName')}
             leftSection={<IconUser size={16} />}
             value={formData.full_name}
             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
             disabled={!editing}
           />
           <TextInput
-            label="Телефон"
+            label={t('profile.phone')}
             leftSection={<IconPhone size={16} />}
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -436,9 +438,9 @@ export default function Profile() {
 
       <Card withBorder radius="md" p="lg">
         <Group justify="space-between" mb="md">
-          <Text fw={500}>Telegram</Text>
+          <Text fw={500}>{t('profile.telegram')}</Text>
           <Button variant="light" size="xs" onClick={openTelegramModal}>
-            {telegramUsername ? 'Изменить' : 'Привязать'}
+            {telegramUsername ? t('profile.change') : t('profile.link')}
           </Button>
         </Group>
         <Group>
@@ -446,19 +448,19 @@ export default function Profile() {
           {telegramUsername ? (
             <div>
               <Text size="sm">@{telegramUsername}</Text>
-              <Text size="xs" c="dimmed">Привязан к аккаунту</Text>
+              <Text size="xs" c="dimmed">{t('profile.telegramLinked')}</Text>
             </div>
           ) : (
-            <Text size="sm" c="dimmed">Telegram не привязан</Text>
+            <Text size="sm" c="dimmed">{t('profile.telegramNotLinked')}</Text>
           )}
         </Group>
       </Card>
 
       <Card withBorder radius="md" p="lg">
-        <Text fw={500} mb="md">Безопасность</Text>
+        <Text fw={500} mb="md">{t('profile.security')}</Text>
         <Stack gap="md">
           <Button variant="light" leftSection={<IconLock size={16} />} onClick={() => setPasswordModalOpen(true)}>
-            Изменить пароль
+            {t('profile.changePassword')}
           </Button>
         </Stack>
       </Card>
@@ -466,21 +468,21 @@ export default function Profile() {
       <Modal
         opened={passwordModalOpen}
         onClose={() => { setPasswordModalOpen(false); setNewPassword(''); }}
-        title="Изменить пароль"
+        title={t('profile.changePassword')}
       >
         <Stack gap="md">
           <PasswordInput
-            label="Новый пароль"
-            placeholder="Введите новый пароль"
+            label={t('profile.newPassword')}
+            placeholder={t('profile.newPasswordPlaceholder')}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
           <Group justify="flex-end">
             <Button variant="light" onClick={() => { setPasswordModalOpen(false); setNewPassword(''); }}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleChangePassword}>
-              Сохранить
+              {t('common.save')}
             </Button>
           </Group>
         </Stack>
@@ -497,25 +499,25 @@ export default function Profile() {
       <Modal
         opened={telegramModalOpen}
         onClose={() => setTelegramModalOpen(false)}
-        title="Привязать Telegram"
+        title={t('profile.linkTelegram')}
       >
         <Stack gap="md">
           <TextInput
-            label="Telegram логин"
+            label={t('profile.telegramLogin')}
             placeholder="@username"
             value={telegramInput}
             onChange={(e) => setTelegramInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSaveTelegram()}
           />
           <Text size="xs" c="dimmed">
-            Введите ваш Telegram логин (без @)
+            {t('profile.telegramLoginHint')}
           </Text>
           <Group justify="flex-end">
             <Button variant="light" onClick={() => setTelegramModalOpen(false)}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSaveTelegram} loading={telegramSaving}>
-              Сохранить
+              {t('common.save')}
             </Button>
           </Group>
         </Stack>
@@ -525,9 +527,9 @@ export default function Profile() {
         opened={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         onConfirm={handleDeleteAutopayment}
-        title="Удаление способа оплаты"
-        message={`Вы уверены, что хотите удалить способ оплаты "${autopaymentToDelete?.name || ''}"?`}
-        confirmLabel="Удалить"
+        title={t('payments.deletePaymentMethod')}
+        message={t('payments.deletePaymentMethodConfirm', { name: autopaymentToDelete?.name || '' })}
+        confirmLabel={t('common.delete')}
         confirmColor="red"
         loading={deletingAutopayment}
       />

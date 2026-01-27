@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Text, Stack, Group, Badge, Button, Loader, Center, Paper, Title, Table, Pagination } from '@mantine/core';
 import { IconCreditCard, IconPlus } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { useStore } from '../store/useStore';
 import PayModal from '../components/PayModal';
@@ -19,6 +20,7 @@ export default function Payments() {
   const [payModalOpen, setPayModalOpen] = useState(false);
   const perPage = 10;
   const { user } = useStore();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -48,8 +50,8 @@ export default function Payments() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={2}>Платежи</Title>
-        <Button leftSection={<IconPlus size={16} />} onClick={() => setPayModalOpen(true)}>Пополнить баланс</Button>
+        <Title order={2}>{t('payments.title')}</Title>
+        <Button leftSection={<IconPlus size={16} />} onClick={() => setPayModalOpen(true)}>{t('payments.topUpBalance')}</Button>
       </Group>
 
       <Card withBorder radius="md" p="lg">
@@ -57,15 +59,15 @@ export default function Payments() {
           <Group>
             <IconCreditCard size={24} />
             <div>
-              <Text size="sm" c="dimmed">Текущий баланс</Text>
-              <Text size="xl" fw={700}>{user?.balance ?? 0} ₽</Text>
+              <Text size="sm" c="dimmed">{t('payments.currentBalance')}</Text>
+              <Text size="xl" fw={700}>{user?.balance ?? 0} {t('common.currency')}</Text>
             </div>
           </Group>
           {user?.credit && user.credit > 0 && (
-            <Badge color="orange" size="lg" variant="light">Кредит: {user.credit} ₽</Badge>
+            <Badge color="orange" size="lg" variant="light">{t('profile.credit')}: {user.credit} {t('common.currency')}</Badge>
           )}
           {user?.discount && user.discount > 0 && (
-            <Badge color="orange" size="lg" variant="light">Скидка: {user.discount} %</Badge>
+            <Badge color="orange" size="lg" variant="light">{t('payments.discount')}: {user.discount} %</Badge>
           )}
         </Group>
       </Card>
@@ -73,7 +75,7 @@ export default function Payments() {
       {payments.length === 0 ? (
         <Paper withBorder p="xl" radius="md">
           <Center>
-            <Text c="dimmed">История платежей пуста</Text>
+            <Text c="dimmed">{t('payments.historyEmpty')}</Text>
           </Center>
         </Paper>
       ) : (
@@ -83,16 +85,16 @@ export default function Payments() {
               <Table striped highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>Дата</Table.Th>
-                    <Table.Th>Платёжная система</Table.Th>
-                    <Table.Th style={{ textAlign: 'right' }}>Сумма</Table.Th>
+                    <Table.Th>{t('payments.date')}</Table.Th>
+                    <Table.Th>{t('payments.paymentSystem')}</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>{t('payments.amount')}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
                   {paginatedPayments.map((payment) => (
                     <Table.Tr key={payment.id}>
                       <Table.Td>
-                        <Text size="sm">{new Date(payment.date).toLocaleDateString('ru-RU')}</Text>
+                        <Text size="sm">{new Date(payment.date).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')}</Text>
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">{payment.pay_system_id || '-'}</Text>
@@ -103,7 +105,7 @@ export default function Payments() {
                           fw={500}
                           c={payment.money > 0 ? 'green' : 'red'}
                         >
-                          {payment.money > 0 ? '+' : ''}{payment.money} ₽
+                          {payment.money > 0 ? '+' : ''}{payment.money} {t('common.currency')}
                         </Text>
                       </Table.Td>
                     </Table.Tr>

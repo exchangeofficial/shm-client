@@ -1,4 +1,5 @@
 import { Modal, Stack, Text, Group, Button } from '@mantine/core';
+import { useTranslation } from 'react-i18next';
 import { IconAlertTriangle } from '@tabler/icons-react';
 
 interface ConfirmModalProps {
@@ -17,15 +18,17 @@ export default function ConfirmModal({
   opened,
   onClose,
   onConfirm,
-  title = 'Подтверждение',
+  title,
   message,
-  confirmLabel = 'Подтвердить',
-  cancelLabel = 'Отмена',
+  confirmLabel,
+  cancelLabel,
   confirmColor = 'red',
   loading = false,
 }: ConfirmModalProps) {
+  const { t } = useTranslation();
+
   return (
-    <Modal opened={opened} onClose={onClose} title={title} centered size="sm">
+    <Modal opened={opened} onClose={onClose} title={title || t('confirm.title')} centered size="sm">
       <Stack gap="md">
         <Group gap="sm" align="flex-start">
           <IconAlertTriangle size={24} color="var(--mantine-color-orange-6)" />
@@ -33,10 +36,10 @@ export default function ConfirmModal({
         </Group>
         <Group justify="flex-end" gap="sm">
           <Button variant="default" onClick={onClose} disabled={loading}>
-            {cancelLabel}
+            {cancelLabel || t('common.cancel')}
           </Button>
           <Button color={confirmColor} onClick={onConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel || t('common.confirm')}
           </Button>
         </Group>
       </Stack>

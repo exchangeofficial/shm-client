@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Stack, Text, Card, Group, Badge, Loader, Center, Button, Paper, Divider, Select, NumberInput, Alert } from '@mantine/core';
 import { IconArrowLeft, IconCreditCard, IconCheck, IconWallet } from '@tabler/icons-react';
 import { servicesApi, userApi } from '../api/client';
@@ -24,17 +25,6 @@ interface OrderServiceModalProps {
   onOrderSuccess?: () => void;
 }
 
-const categoryLabels: Record<string, string> = {
-  vpn: 'VPN',
-  proxy: 'VPN Подписка',
-  web_tariff: 'Тарифы хостинга',
-  web: 'Web хостинг',
-  mysql: 'Базы данных',
-  mail: 'Почта',
-  hosting: 'Хостинг',
-  other: 'Прочее',
-};
-
 function normalizeCategory(category: string): string {
   if (category.match(/remna|remnawave|marzban|marz|mz/i)) {
     return 'proxy';
@@ -48,14 +38,8 @@ function normalizeCategory(category: string): string {
   return 'other';
 }
 
-const periodLabels: Record<number, string> = {
-  1: 'месяц',
-  3: '3 месяца',
-  6: '6 месяцев',
-  12: 'год',
-};
-
 export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: OrderServiceModalProps) {
+  const { t } = useTranslation();
   const [services, setServices] = useState<OrderService[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<OrderService | null>(null);
@@ -100,8 +84,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
       setServices(response.data.data || []);
     } catch (error) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось загрузить список услуг',
+        title: t('common.error'),
+        message: t('order.loadError'),
         color: 'red',
       });
     } finally {
@@ -122,8 +106,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
       setPaySystemsLoaded(true);
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось загрузить платёжные системы',
+        title: t('common.error'),
+        message: t('payments.paymentSystemsError'),
         color: 'red',
       });
     } finally {
@@ -139,8 +123,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
       await servicesApi.order(selectedService.service_id);
 
       notifications.show({
-        title: 'Успешно',
-        message: `Услуга "${selectedService.name}" заказана и оплачена с баланса`,
+        title: t('common.success'),
+        message: t('order.orderSuccess', { name: selectedService.name }),
         color: 'green',
       });
 
@@ -148,8 +132,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
       handleClose();
     } catch (error) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось заказать услугу',
+        title: t('common.error'),
+        message: t('order.orderError'),
         color: 'red',
       });
     } finally {
@@ -163,8 +147,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
     const paySystem = paySystems.find(ps => ps.name === selectedPaySystem);
     if (!paySystem) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Выберите платёжную систему',
+        title: t('common.error'),
+        message: t('payments.selectPaymentSystem'),
         color: 'red',
       });
       return;
@@ -176,8 +160,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
       window.open(paySystem.shm_url + payAmount, '_blank');
 
       notifications.show({
-        title: 'Успешно',
-        message: `Услуга "${selectedService.name}" заказана. Откройте окно оплаты.`,
+        title: t('common.success'),
+        message: t('order.orderPaySuccess', { name: selectedService.name }),
         color: 'green',
       });
 
@@ -185,8 +169,8 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
       handleClose();
     } catch (error) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось заказать услугу',
+        title: t('common.error'),
+        message: t('order.orderError'),
         color: 'red',
       });
     } finally {
@@ -219,7 +203,7 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
     <Modal
       opened={opened}
       onClose={handleClose}
-      title={selectedService ? 'Детали услуги' : 'Заказать услугу'}
+      title={selectedService ? t('order.serviceDetails') : t('order.title')}
       size="lg"
     >
       {loading ? (
@@ -235,7 +219,7 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
             size="compact-sm"
             w="fit-content"
           >
-            Назад к списку
+            {t('order.backToList')}
           </Button>
 
           <Paper withBorder p="md" radius="md">
@@ -254,13 +238,17 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
 
               <Group justify="space-between" mt="md">
                 <div>
-                  <Text size="sm" c="dimmed">Стоимость</Text>
+                  <Text size="sm" c="dimmed">{t('services.cost')}</Text>
                   <Text fw={600} size="lg">{selectedService.cost} ₽</Text>
                 </div>
                 <div>
-                  <Text size="sm" c="dimmed">Период</Text>
+                  <Text size="sm" c="dimmed">{t('order.period')}</Text>
                   <Text fw={500}>
-                    {periodLabels[selectedService.period] || `${selectedService.period} мес.`}
+                    {selectedService.period === 1 ? t('common.month') :
+                     selectedService.period === 3 ? t('common.months3') :
+                     selectedService.period === 6 ? t('common.months6') :
+                     selectedService.period === 12 ? t('common.year') :
+                     `${selectedService.period} ${t('common.months')}`}
                   </Text>
                 </div>
               </Group>
@@ -273,11 +261,11 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
             icon={<IconWallet size={18} />}
           >
             <Group justify="space-between">
-              <Text size="sm">Ваш баланс: <Text span fw={600}>{userBalance} ₽</Text></Text>
+              <Text size="sm">{t('order.yourBalance')}: <Text span fw={600}>{userBalance} ₽</Text></Text>
               {userBalance >= selectedService.cost ? (
-                <Badge color="green" variant="light">Достаточно для оплаты</Badge>
+                <Badge color="green" variant="light">{t('order.enoughToPay')}</Badge>
               ) : (
-                <Badge color="yellow" variant="light">Нужно пополнить на {Math.ceil((selectedService.cost - userBalance) * 100) / 100} ₽</Badge>
+                <Badge color="yellow" variant="light">{t('order.needTopUp', { amount: Math.ceil((selectedService.cost - userBalance) * 100) / 100 })}</Badge>
               )}
             </Group>
           </Alert>
@@ -291,40 +279,40 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
               onClick={handleOrder}
               loading={ordering}
             >
-              Заказать за {selectedService.cost} ₽
+              {t('order.orderFor', { amount: selectedService.cost })}
             </Button>
           ) : (
             <>
               <Paper withBorder p="md" radius="md">
                 <Stack gap="md">
-                  <Text fw={500}>Пополнить баланс</Text>
+                  <Text fw={500}>{t('order.topUpBalance')}</Text>
 
                   {paySystemsLoading ? (
                     <Group justify="center" py="md">
                       <Loader size="sm" />
-                      <Text size="sm">Загрузка платёжных систем...</Text>
+                      <Text size="sm">{t('payments.loadingPaymentSystems')}</Text>
                     </Group>
                   ) : paySystems.length === 0 ? (
-                    <Text c="dimmed" size="sm">Нет доступных платёжных систем</Text>
+                    <Text c="dimmed" size="sm">{t('payments.noPaymentSystems')}</Text>
                   ) : (
                     <>
                       <Select
-                        label="Платёжная система"
-                        placeholder="Выберите платёжную систему"
+                        label={t('payments.paymentSystem')}
+                        placeholder={t('payments.selectPaymentSystem')}
                         data={paySystems.map(ps => ({ value: ps.name, label: ps.name }))}
                         value={selectedPaySystem}
                         onChange={setSelectedPaySystem}
                       />
                       <NumberInput
-                        label="Сумма к оплате"
-                        placeholder="Введите сумму"
+                        label={t('payments.amount')}
+                        placeholder={t('payments.enterAmount')}
                         value={payAmount}
                         onChange={setPayAmount}
                         min={Math.ceil((selectedService.cost - userBalance) * 100) / 100}
                         step={10}
                         decimalScale={2}
                         suffix=" ₽"
-                        description={`Минимум: ${(Math.ceil((selectedService.cost - userBalance) * 100) / 100).toFixed(2)} ₽ (недостающая сумма)`}
+                        description={`${t('order.minimum')}: ${(Math.ceil((selectedService.cost - userBalance) * 100) / 100).toFixed(2)} ₽ (${t('order.missingAmount')})`}
                       />
                     </>
                   )}
@@ -339,21 +327,21 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
                 loading={ordering}
                 disabled={!selectedPaySystem || paySystemsLoading}
               >
-                Заказать и оплатить {payAmount} ₽
+                {t('order.orderAndPay', { amount: payAmount })}
               </Button>
             </>
           )}
         </Stack>
       ) : services.length === 0 ? (
         <Center h={200}>
-          <Text c="dimmed">Нет доступных услуг для заказа</Text>
+          <Text c="dimmed">{t('order.noServicesAvailable')}</Text>
         </Center>
       ) : (
         <Stack gap="md">
           {Object.entries(groupedServices).map(([category, categoryServices]) => (
             <div key={category}>
               <Text fw={500} size="sm" c="dimmed" mb="xs">
-                {categoryLabels[category] || category}
+                {t(`categories.${category}`)}
               </Text>
               <Stack gap="xs">
                 {categoryServices.map((service) => (
@@ -377,7 +365,11 @@ export default function OrderServiceModal({ opened, onClose, onOrderSuccess }: O
                       <Group gap="sm">
                         <Text fw={600}>{service.cost} ₽</Text>
                         <Text size="xs" c="dimmed">
-                          / {periodLabels[service.period] || `${service.period} мес.`}
+                          / {service.period === 1 ? t('common.month') :
+                             service.period === 3 ? t('common.months3') :
+                             service.period === 6 ? t('common.months6') :
+                             service.period === 12 ? t('common.year') :
+                             `${service.period} ${t('common.months')}`}
                         </Text>
                       </Group>
                     </Group>

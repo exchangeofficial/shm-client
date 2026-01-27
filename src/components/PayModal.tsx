@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Stack, Group, Button, Text, NumberInput, Select, Loader, ActionIcon, Badge, Card } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -19,6 +20,7 @@ interface PayModalProps {
 }
 
 export default function PayModal({ opened, onClose }: PayModalProps) {
+  const { t } = useTranslation();
   const [paySystems, setPaySystems] = useState<PaySystem[]>([]);
   const [selectedPaySystem, setSelectedPaySystem] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState<number | string>(100);
@@ -48,8 +50,8 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
       setLoaded(true);
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось загрузить платёжные системы',
+        title: t('common.error'),
+        message: t('payments.paymentSystemsError'),
         color: 'red',
       });
     } finally {
@@ -68,8 +70,8 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
     try {
       await userApi.deleteAutopayment(autopaymentToDelete.paysystem);
       notifications.show({
-        title: 'Успешно',
-        message: 'Автоплатёж удалён',
+        title: t('common.success'),
+        message: t('payments.autopaymentDeleted'),
         color: 'green',
       });
       setDeleteConfirmOpen(false);
@@ -79,8 +81,8 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
       loadPaySystems();
     } catch {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось удалить автоплатёж',
+        title: t('common.error'),
+        message: t('payments.autopaymentDeleteError'),
         color: 'red',
       });
     } finally {
@@ -92,8 +94,8 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
     const paySystem = paySystems.find(ps => ps.paysystem === selectedPaySystem);
     if (!paySystem) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Выберите платёжную систему',
+        title: t('common.error'),
+        message: t('payments.selectPaymentSystem'),
         color: 'red',
       });
       return;
@@ -112,28 +114,28 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
       <Modal
         opened={opened}
         onClose={onClose}
-        title="Пополнение баланса"
+        title={t('payments.topUpBalance')}
       >
       <Stack gap="md">
         {loading ? (
           <Group justify="center" py="md">
             <Loader size="sm" />
-            <Text size="sm">Загрузка платёжных систем...</Text>
+            <Text size="sm">{t('payments.loadingPaymentSystems')}</Text>
           </Group>
         ) : paySystems.length === 0 ? (
-          <Text c="dimmed">Нет доступных платёжных систем</Text>
+          <Text c="dimmed">{t('payments.noPaymentSystems')}</Text>
         ) : (
           <>
             {/* Список с автоплатежами для удаления */}
             {paySystems.some(ps => ps.allow_deletion === 1) && (
               <Card withBorder p="sm" radius="md">
-                <Text size="sm" fw={500} mb="xs">Сохранённые способы оплаты</Text>
+                <Text size="sm" fw={500} mb="xs">{t('payments.savedPaymentMethods')}</Text>
                 <Stack gap="xs">
                   {paySystems.filter(ps => ps.allow_deletion === 1).map(ps => (
                     <Group key={ps.paysystem} justify="space-between">
                       <Group gap="xs">
                         <Text size="sm">{ps.name}</Text>
-                        <Badge size="xs" variant="light" color="blue">Автоплатёж</Badge>
+                        <Badge size="xs" variant="light" color="blue">{t('payments.autopayment')}</Badge>
                       </Group>
                       <ActionIcon
                         size="sm"
@@ -150,15 +152,15 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
               </Card>
             )}
             <Select
-              label="Платёжная система"
-              placeholder="Выберите платёжную систему"
+              label={t('payments.paymentSystem')}
+              placeholder={t('payments.selectPaymentSystem')}
               data={paySystems.map(ps => ({ value: ps.paysystem, label: ps.name }))}
               value={selectedPaySystem}
               onChange={setSelectedPaySystem}
             />
             <NumberInput
-              label="Сумма"
-              placeholder="Введите сумму"
+              label={t('payments.amount')}
+              placeholder={t('payments.enterAmount')}
               value={payAmount}
               onChange={setPayAmount}
               min={1}
@@ -168,10 +170,10 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
             />
             <Group justify="flex-end">
               <Button variant="light" onClick={onClose}>
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button onClick={handlePay} disabled={!selectedPaySystem}>
-                Оплатить
+                {t('payments.pay')}
               </Button>
             </Group>
           </>
@@ -183,9 +185,9 @@ export default function PayModal({ opened, onClose }: PayModalProps) {
         opened={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         onConfirm={handleDeleteAutopayment}
-        title="Удаление способа оплаты"
-        message={`Вы уверены, что хотите удалить способ оплаты "${autopaymentToDelete?.name || ''}"?`}
-        confirmLabel="Удалить"
+        title={t('payments.deletePaymentMethod')}
+        message={t('payments.deletePaymentMethodConfirm', { name: autopaymentToDelete?.name || '' })}
+        confirmLabel={t('common.delete')}
         confirmColor="red"
         loading={deleting !== null}
       />

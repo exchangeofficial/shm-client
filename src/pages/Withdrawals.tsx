@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, Stack, Loader, Center, Paper, Title, Table, Pagination, Badge } from '@mantine/core';
 import { api } from '../api/client';
 
@@ -18,6 +19,7 @@ interface Withdraw {
 }
 
 export default function Withdrawals() {
+  const { t, i18n } = useTranslation();
   const [withdrawals, setWithdrawals] = useState<Withdraw[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -50,12 +52,12 @@ export default function Withdrawals() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>Списания</Title>
+      <Title order={2}>{t('withdrawals.title')}</Title>
 
       {withdrawals.length === 0 ? (
         <Paper withBorder p="xl" radius="md">
           <Center>
-            <Text c="dimmed">История списаний пуста</Text>
+            <Text c="dimmed">{t('withdrawals.historyEmpty')}</Text>
           </Center>
         </Paper>
       ) : (
@@ -66,13 +68,13 @@ export default function Withdrawals() {
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>ID</Table.Th>
-                    <Table.Th>Дата списания</Table.Th>
-                    <Table.Th>Дата окончания</Table.Th>
-                    <Table.Th style={{ textAlign: 'right' }}>Стоимость</Table.Th>
-                    <Table.Th style={{ textAlign: 'right' }}>Скидка</Table.Th>
-                    <Table.Th style={{ textAlign: 'right' }}>Бонус</Table.Th>
-                    <Table.Th style={{ textAlign: 'right' }}>Итого</Table.Th>
-                    <Table.Th>Период</Table.Th>
+                    <Table.Th>{t('withdrawals.withdrawDate')}</Table.Th>
+                    <Table.Th>{t('withdrawals.endDate')}</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>{t('services.cost')}</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>{t('payments.discount')}</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>{t('profile.bonus')}</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>{t('withdrawals.total')}</Table.Th>
+                    <Table.Th>{t('order.period')}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -83,12 +85,12 @@ export default function Withdrawals() {
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">
-                          {w.withdraw_date ? new Date(w.withdraw_date).toLocaleDateString('ru-RU') : '-'}
+                          {w.withdraw_date ? new Date(w.withdraw_date).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US') : '-'}
                         </Text>
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">
-                          {w.end_date ? new Date(w.end_date).toLocaleDateString('ru-RU') : '-'}
+                          {w.end_date ? new Date(w.end_date).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US') : '-'}
                         </Text>
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'right' }}>
@@ -113,7 +115,7 @@ export default function Withdrawals() {
                       </Table.Td>
                       <Table.Td>
                         <Badge variant="light" color="blue">
-                          {w.months} мес. × {w.qnt}
+                          {w.months} {t('common.months')} × {w.qnt}
                         </Badge>
                       </Table.Td>
                     </Table.Tr>

@@ -6,9 +6,11 @@ import { Notifications } from '@mantine/notifications';
 import { useDisclosure } from '@mantine/hooks';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { IconServer, IconCreditCard, IconSun, IconMoon, IconUser, IconLogout, IconReceipt } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from './store/useStore';
 import { auth } from './api/client';
 import { config } from './config';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 // Pages
 import Services from './pages/Services';
@@ -80,6 +82,7 @@ function WebAppHeader() {
 
   return (
     <Group justify="flex-end" p="sm" gap="xs">
+      <LanguageSwitcher />
       <ActionIcon
         onClick={handleThemeToggle}
         variant="subtle"
@@ -106,12 +109,20 @@ function BottomNavigation() {
   const navigate = useNavigate();
   const { menuItems } = useStore();
   const computedColorScheme = useComputedColorScheme('light');
+  const { t } = useTranslation();
 
   const iconMap: Record<string, React.ReactNode> = {
     '/': <IconUser size={20} />,
     '/services': <IconServer size={20} />,
     '/payments': <IconCreditCard size={20} />,
     '/withdrawals': <IconReceipt size={20} />,
+  };
+
+  const labelMap: Record<string, string> = {
+    '/': t('nav.home'),
+    '/services': t('nav.services'),
+    '/payments': t('nav.payments'),
+    '/withdrawals': t('nav.withdrawals'),
   };
 
   const enabledItems = menuItems.filter(item => item.enabled);
@@ -168,7 +179,7 @@ function BottomNavigation() {
                 }}
               >
                 {iconMap[item.path]}
-                <Text size="xs" mt={4} fw={isActive ? 600 : 400}>{item.label}</Text>
+                <Text size="xs" mt={4} fw={isActive ? 600 : 400}>{labelMap[item.path] || item.label}</Text>
               </Box>
             );
           })}
@@ -184,6 +195,7 @@ function AppContent() {
   const navigate = useNavigate();
   const { user, menuItems, themeConfig, isAuthenticated, isLoading, setUser, setIsLoading, logout } = useStore();
   const [isTelegramWebApp] = useState(isInsideTelegramWebApp);
+  const { t } = useTranslation();
 
   // Инициализация Telegram WebApp
   useEffect(() => {
@@ -260,6 +272,13 @@ function AppContent() {
     '/withdrawals': <IconReceipt size={16} />,
   };
 
+  const labelMap: Record<string, string> = {
+    '/': t('nav.home'),
+    '/services': t('nav.services'),
+    '/payments': t('nav.payments'),
+    '/withdrawals': t('nav.withdrawals'),
+  };
+
   // Show loading spinner while checking auth
   if (isLoading) {
     return (
@@ -307,13 +326,13 @@ function AppContent() {
           </Group>
           <Group>
             <Text size="sm" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>{user?.login}</Text>
+            <LanguageSwitcher />
             {themeConfig.allowUserThemeChange && <ThemeToggle />}
             <ActionIcon
               onClick={logout}
               variant="default"
               size="lg"
-              aria-label="Выйти"
-              title="Выйти"
+              aria-label="Logout"
             >
               <IconLogout size={18} />
             </ActionIcon>
@@ -328,7 +347,7 @@ function AppContent() {
               key={item.id}
               component={Link}
               to={item.path}
-              label={item.label}
+              label={labelMap[item.path] || item.label}
               leftSection={iconMap[item.path]}
               active={location.pathname === item.path}
               variant="light"

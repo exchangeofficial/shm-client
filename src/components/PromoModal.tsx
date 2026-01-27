@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Stack, Group, Button, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { promoApi } from '../api/client';
@@ -10,14 +11,15 @@ interface PromoModalProps {
 }
 
 export default function PromoModal({ opened, onClose, onSuccess }: PromoModalProps) {
+  const { t } = useTranslation();
   const [promoCode, setPromoCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleApply = async () => {
     if (!promoCode.trim()) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Введите промокод',
+        title: t('common.error'),
+        message: t('promo.enterCode'),
         color: 'red',
       });
       return;
@@ -27,17 +29,17 @@ export default function PromoModal({ opened, onClose, onSuccess }: PromoModalPro
     try {
       await promoApi.apply(promoCode.trim());
       notifications.show({
-        title: 'Успешно',
-        message: 'Промокод применён',
+        title: t('common.success'),
+        message: t('promo.applied'),
         color: 'green',
       });
       setPromoCode('');
       onClose();
       onSuccess?.();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Не удалось применить промокод';
+      const errorMessage = error.response?.data?.error || t('promo.applyError');
       notifications.show({
-        title: 'Ошибка',
+        title: t('common.error'),
         message: errorMessage,
         color: 'red',
       });
@@ -55,22 +57,22 @@ export default function PromoModal({ opened, onClose, onSuccess }: PromoModalPro
     <Modal
       opened={opened}
       onClose={handleClose}
-      title="Ввести промокод"
+      title={t('promo.title')}
     >
       <Stack gap="md">
         <TextInput
-          label="Промокод"
-          placeholder="Введите промокод"
+          label={t('promo.promoCode')}
+          placeholder={t('promo.placeholder')}
           value={promoCode}
           onChange={(e) => setPromoCode(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleApply()}
         />
         <Group justify="flex-end">
           <Button variant="light" onClick={handleClose}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleApply} loading={loading}>
-            Применить
+            {t('promo.apply')}
           </Button>
         </Group>
       </Stack>
