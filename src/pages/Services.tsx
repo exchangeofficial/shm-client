@@ -248,15 +248,9 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                 <Button
                   leftSection={<IconDownload size={16} />}
                   variant="light"
-                  onClick={() => {
-                    const blob = new Blob([storageData], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `vpn${service.user_service_id}.conf`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
+                  component="a"
+                  href={`/shm/v1/storage/download/vpn${service.user_service_id}?format=other&filename=vpn${service.user_service_id}.conf`}
+                  target="_blank"
                 >
                   {t('services.downloadConfig')}
                 </Button>
@@ -268,7 +262,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                 onClose={() => setQrModalOpen(false)}
                 data={isVpn ? (storageData || '') : (subscriptionUrl || '')}
                 title={isVpn ? t('services.vpnQrTitle') : t('services.subscriptionQrTitle')}
-                filename={isVpn ? `vpn${service.user_service_id}` : undefined}
+                downloadUrl={isVpn ? `/shm/v1/storage/download/vpn${service.user_service_id}?format=other&filename=vpn${service.user_service_id}.conf` : undefined}
               />
             </Stack>
           </Tabs.Panel>

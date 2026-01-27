@@ -9,9 +9,10 @@ interface QrModalProps {
   data: string;
   title?: string;
   filename?: string;
+  downloadUrl?: string;
 }
 
-export default function QrModal({ opened, onClose, data, title, filename }: QrModalProps) {
+export default function QrModal({ opened, onClose, data, title, filename, downloadUrl }: QrModalProps) {
   const { t } = useTranslation();
   const handleDownloadQr = () => {
     const svg = document.getElementById('qr-code-svg');
@@ -34,16 +35,6 @@ export default function QrModal({ opened, onClose, data, title, filename }: QrMo
     };
 
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-  };
-
-  const handleDownloadConfig = () => {
-    const blob = new Blob([data], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename ? `${filename}.conf` : 'config.conf';
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   if (!data) return null;
@@ -87,8 +78,14 @@ export default function QrModal({ opened, onClose, data, title, filename }: QrMo
             </ActionIcon>
           </Tooltip>
 
-          {filename && (
-            <Button variant="light" leftSection={<IconDownload size={16} />} onClick={handleDownloadConfig}>
+          {downloadUrl && (
+            <Button
+              variant="light"
+              leftSection={<IconDownload size={16} />}
+              component="a"
+              href={downloadUrl}
+              target="_blank"
+            >
               {t('services.downloadConfig')}
             </Button>
           )}
