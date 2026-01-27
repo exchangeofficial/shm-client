@@ -48,16 +48,12 @@ services:
 | `TELEGRAM_BOT_AUTH_ENABLE` | Включить авторизацию через Telegram виджет | `false` |
 | `RESOLVER` | DNS резолвер для nginx | `127.0.0.11` |
 
-### Сборка образа
-
 ## Установка на другом сервере
 
 ```bash
 npm install
 ```
 
-## Конфигурация
-
 Создайте файл `public/config.js`:
 
 ```javascript
@@ -68,24 +64,9 @@ window.SHM_CONFIG = {
   TELEGRAM_BOT_AUTH_ENABLE: 'true'
 };
 ```
-
-## Сборка
 
 ```bash
 npm run build
-```
-
-## Конфигурация
-
-Создайте файл `public/config.js`:
-
-```javascript
-window.SHM_CONFIG = {
-  API_URL: 'https://your-api.example.com',
-  APP_NAME: 'My Service',
-  TELEGRAM_BOT_NAME: 'your_bot',
-  TELEGRAM_BOT_AUTH_ENABLE: 'true'
-};
 ```
 
 ## Категории услуг для VPN/Proxy
