@@ -65,7 +65,26 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
   const [stopping, setStopping] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { t, i18n } = useTranslation();
+
+  const downloadConfig = async () => {
+    if (!storageData) return;
+    setDownloading(true);
+    try {
+      const blob = new Blob([storageData], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vpn${service.user_service_id}.conf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const canDelete = ['BLOCK', 'NOT PAID', 'ERROR'].includes(service.status);
   const canStop = service.status === 'ACTIVE';
@@ -248,9 +267,8 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                 <Button
                   leftSection={<IconDownload size={16} />}
                   variant="light"
-                  component="a"
-                  href={`/shm/v1/storage/download/vpn${service.user_service_id}?format=other&filename=vpn${service.user_service_id}.conf`}
-                  target="_blank"
+                  onClick={downloadConfig}
+                  loading={downloading}
                 >
                   {t('services.downloadConfig')}
                 </Button>
@@ -262,7 +280,7 @@ function ServiceDetail({ service, onDelete }: ServiceDetailProps) {
                 onClose={() => setQrModalOpen(false)}
                 data={isVpn ? (storageData || '') : (subscriptionUrl || '')}
                 title={isVpn ? t('services.vpnQrTitle') : t('services.subscriptionQrTitle')}
-                downloadUrl={isVpn ? `/shm/v1/storage/download/vpn${service.user_service_id}?format=other&filename=vpn${service.user_service_id}.conf` : undefined}
+                onDownload={isVpn ? downloadConfig : undefined}
               />
             </Stack>
           </Tabs.Panel>

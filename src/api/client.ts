@@ -95,7 +95,6 @@ export const userApi = {
 
 export const storageApi = {
   get: (name: string) => api.get(`/storage/manage/${name}`),
-  download: (name: string) => api.get(`/storage/download/${name}`),
   list: () => api.get('/storage/manage'),
 };
 
