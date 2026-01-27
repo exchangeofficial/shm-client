@@ -54,7 +54,19 @@ services:
 
 ```bash
 npm install
-npm run dev
+```
+
+## Конфигурация
+
+Создайте файл `public/config.js`:
+
+```javascript
+window.SHM_CONFIG = {
+  API_URL: 'https://your-api.example.com',
+  APP_NAME: 'My Service',
+  TELEGRAM_BOT_NAME: 'your_bot',
+  TELEGRAM_BOT_AUTH_ENABLE: 'true'
+};
 ```
 
 ## Сборка
